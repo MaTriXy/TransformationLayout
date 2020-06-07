@@ -21,18 +21,21 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.skydoves.transformationlayoutdemo.DetailActivity
+import com.skydoves.transformationlayout.TransformationLayout
 import com.skydoves.transformationlayoutdemo.R
-import kotlinx.android.synthetic.main.item_poster_line.view.*
+import kotlinx.android.synthetic.main.item_poster.view.*
 
-class PosterLineAdapter : RecyclerView.Adapter<PosterLineAdapter.PosterViewHolder>() {
+class PosterSingleAdapter
+constructor(
+  private val delegate: PosterDelegate
+) : RecyclerView.Adapter<PosterSingleAdapter.PosterViewHolder>() {
 
   private val items = mutableListOf<Poster>()
   private var previousTime = System.currentTimeMillis()
 
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PosterViewHolder {
     val inflater = LayoutInflater.from(parent.context)
-    return PosterViewHolder(inflater.inflate(R.layout.item_poster_line, parent, false))
+    return PosterViewHolder(inflater.inflate(R.layout.item_poster, parent, false))
   }
 
   override fun onBindViewHolder(holder: PosterViewHolder, position: Int) {
@@ -43,10 +46,15 @@ class PosterLineAdapter : RecyclerView.Adapter<PosterLineAdapter.PosterViewHolde
         .into(item_poster_post)
       item_poster_title.text = item.name
       item_poster_running_time.text = item.playtime
+
+      // sets a transition name to the transformation layout.
+      // this code must not be in listener.
+      item_poster_transformationLayout.transitionName = item.name
+
       setOnClickListener {
         val now = System.currentTimeMillis()
-        if (now - previousTime >= item_poster_line_transformationLayout.duration) {
-          DetailActivity.startActivity(context, item_poster_line_transformationLayout, item)
+        if (previousTime - now >= item_poster_transformationLayout.duration) {
+          delegate.onItemClick(item, item_poster_transformationLayout)
           previousTime = now
         }
       }
@@ -62,4 +70,8 @@ class PosterLineAdapter : RecyclerView.Adapter<PosterLineAdapter.PosterViewHolde
   override fun getItemCount() = items.size
 
   class PosterViewHolder(view: View) : RecyclerView.ViewHolder(view)
+
+  interface PosterDelegate {
+    fun onItemClick(poster: Poster, itemView: TransformationLayout)
+  }
 }

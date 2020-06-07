@@ -14,27 +14,50 @@
  * limitations under the License.
  */
 
-package com.skydoves.transformationlayoutdemo
+package com.skydoves.transformationlayoutdemo.single
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
-import com.skydoves.transformationlayout.TransformationAppCompatActivity
-import com.skydoves.transformationlayout.TransformationCompat
 import com.skydoves.transformationlayout.TransformationLayout
+import com.skydoves.transformationlayout.onTransformationEndContainer
+import com.skydoves.transformationlayoutdemo.R
 import com.skydoves.transformationlayoutdemo.recycler.Poster
+import kotlinx.android.synthetic.main.activity_detail.detail_container
 import kotlinx.android.synthetic.main.activity_detail.detail_description
 import kotlinx.android.synthetic.main.activity_detail.detail_title
 import kotlinx.android.synthetic.main.activity_detail.profile_detail_background
 
-class DetailActivity : TransformationAppCompatActivity() {
+class MainSingleDetailFragment : Fragment() {
+
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View? {
+    return inflater.inflate(R.layout.activity_detail, container, false)
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_detail)
 
-    intent.getParcelableExtra<Poster>(posterExtraName)?.let {
+    // [Step1]: apply onTransformationEndContainer using TransformationLayout.Params.
+    val params = arguments?.getParcelable<TransformationLayout.Params>(paramsKey)
+    onTransformationEndContainer(params)
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+
+    val poster = arguments?.getParcelable<Poster>(posterKey)
+    poster?.let {
+
+      // [Step2]: sets a transition name to the target view.
+      detail_container.transitionName = poster.name
+
       Glide.with(this)
         .load(it.poster)
         .into(profile_detail_background)
@@ -44,15 +67,8 @@ class DetailActivity : TransformationAppCompatActivity() {
   }
 
   companion object {
-    const val posterExtraName = "posterExtraName"
-    fun startActivity(
-      context: Context,
-      transformationLayout: TransformationLayout,
-      poster: Poster
-    ) {
-      val intent = Intent(context, DetailActivity::class.java)
-      intent.putExtra(posterExtraName, poster)
-      TransformationCompat.startActivity(transformationLayout, intent)
-    }
+    const val TAG = "LibraryFragment"
+    const val posterKey = "posterKey"
+    const val paramsKey = "paramsKey"
   }
 }

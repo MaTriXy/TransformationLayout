@@ -10,8 +10,8 @@
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/></a>
   <a href="https://android-arsenal.com/api?level=21"><img alt="API" src="https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat"/></a>
-  <a href="https://github.com/skydoves/DisneyMotions/actions"><img alt="Build Status" src="https://github.com/skydoves/TransformationLayout/workflows/Android%20CI/badge.svg"/></a> 
-  <a href="https://github.com/skydoves"><img alt="License" src="https://img.shields.io/static/v1?label=GitHub&message=skydoves&color=C51162"/></a> 
+  <a href="https://github.com/skydoves/TransformationLayout/actions"><img alt="Build Status" src="https://github.com/skydoves/TransformationLayout/workflows/Android%20CI/badge.svg"/></a> 
+  <a href="https://github.com/skydoves"><img alt="Profile" src="https://skydoves.github.io/badges/skydoves.svg"/></a>
 </p>
 
 ## Download
@@ -39,7 +39,7 @@ allprojects {
 And add a dependency code to your **module**'s `build.gradle` file.
 ```gradle
 dependencies {
-    implementation "com.github.skydoves:transformationlayout:1.0.1"
+    implementation "com.github.skydoves:transformationlayout:1.0.4"
 }
 ```
 
@@ -116,25 +116,110 @@ transformationLayout.bindTargetView(myCardView)
 
 #### Starting and finishing the transformation
 After binding a targetView, we can start or finish transformation using the below methods.<br>
-The `startTransform` and `finishTransform` methods need a `parent` as a parameter.<br>
-The parent parameter should be the root layout (the highest level layout).
 ```kotlin
 // start transformation when touching the fab.
 fab.setOnClickListener {
-  transformationLayout.startTransform(parent)
+  transformationLayout.startTransform()
 }
 
 // finish transformation when touching the myCardView.
 myCardView.setOnClickListener {
-  transformationLayout.finishTransform(parent)
+  transformationLayout.finishTransform()
 }
+```
+Here are other functionalities to starting and finishing transformation.
+
+```kotlin
+// starts and finishes transformation 1000 milliseconds later.
+// If we use this method on onCreate() method, it will starts transformation automatically 200ms later.
+transformationLayout.startTransformWithDelay(200)
+transformationLayout.finishTransformWithDelay(200)
+
+// starts and finishes transformation with stopping a parent layout.
+transformationLayout.startTransform(parent)
+transformationLayout.finishTransform(parent)
+```
+
+### OnTransformFinishListener
+We can listen a `TransformationLayout` is transformed or not using `OnTransformFinishListener`. <br>
+```kotlin
+transformationLayout.setOnTransformFinishListener {
+  Toast.makeText(context, "is transformed: $it", Toast.LENGTH_SHORT).show()
+}
+```
+Here is the __Java__ way.
+```java
+transformationLayout.onTransformFinishListener = new OnTransformFinishListener() {
+  @Override public void onFinish(boolean isTransformed) {
+    Toast.makeText(context, "is transformed:" + isTransformed, Toast.LENGTH_SHORT).show();
+  }
+};
 ```
 
 ### Transform into an Activity
+We can implement transformation between activities easily using `TransformationActivity` and `TransformationCompat`.
 
 <img src="/preview/preview2.gif" align="right" width="32%"/>
 
-Here is an example of a transforming floating action button to Activity. <br>
+Here is an example of transforming a floating action button to Activity. <br>
+We don't need to bind a targetView.
+
+```gradle
+<com.skydoves.transformationlayout.TransformationLayout
+    android:id="@+id/transformationLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:transformation_duration="550">
+
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
+      android:id="@+id/fab"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:backgroundTint="@color/colorPrimary"
+      android:src="@drawable/ic_write"/>
+</com.skydoves.transformationlayout.TransformationLayout>
+```
+#### onTransformationStartContainer
+We should add `onTransformationStartContainer()` to the Activity that has the floating action button. If your view is in the fragment, the code should be added to the fragment's Activity. It must be called before `super.onCreate`.
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    onTransformationStartContainer() // should be called before super.onCreate().
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_main)
+}
+```
+Here is the Java way.
+```java
+TransitionExtensionKt.onTransformationStartContainer(this);
+```
+
+#### TransformationAppCompatActivity
+Extends `TransformationAppCompatActivity` or `TransformationActivity` to your activity that will be transformed.
+```kotlin
+class DetailActivity : TransformationAppCompatActivity()
+```
+Here is the Java way.
+```java
+public class DetailActivity extends TransformationAppCompatActivity 
+```
+
+#### TransformationCompat
+And start the `DetailActivity` using the `TransformationCompat.startActivity` method.
+```kotlin
+val intent = Intent(context, DetailActivity::class.java)
+TransformationCompat.startActivity(transformationLayout, intent)
+```
+Here is the Java way.
+```java
+Intent intent = new Intent(context, DetailActivity.class);
+TransformationCompat.INSTANCE.startActivity(transformationLayout, intent);
+```
+
+### Manually Transform into an Activity
+
+<img src="/preview/preview2.gif" align="right" width="32%"/>
+
+Here is an example of transforming a floating action button to Activity. <br>
 We don't need to bind a targetView.
 
 ```gradle
@@ -189,7 +274,7 @@ override fun onBindViewHolder(holder: PosterViewHolder, position: Int) {
 }
 ```
 
-Here is the Java way.
+Here is the __Java__ way.
 ```java
 Bundle bundle = transformationLayout.withActivity(this, "myTransitionName");
 Intent intent = new Intent(this, DetailActivity.class);
@@ -209,27 +294,105 @@ override fun onCreate(savedInstanceState: Bundle?) {
 }
 ```
 
-Here is the Java way.
+Here is the __Java__ way.
 ```java
 TransformationLayout.Params params = getIntent().getParcelableExtra("myTransitionName");
 TransitionExtensionKt.onTransformationEndContainer(this, params);
 ```
 
-### OnTransformFinishListener
-We can listen a `TransformationLayout` is transformed or not using `OnTransformFinishListener`. <br>
+### Transform into a Fragment
+We can implement transformation between fragments for a single Activity application.<br>
+Here is an example of transforming a floating action button in Fragment A to Fragment B.
+
+<img src="https://user-images.githubusercontent.com/24237865/80108763-a1e6fa80-85b7-11ea-9350-f9d8ebc46310.gif" align="right" width="32%"/>
+
+```gradle
+<com.skydoves.transformationlayout.TransformationLayout
+    android:id="@+id/transformationLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:transformation_duration="550">
+
+  <com.google.android.material.floatingactionbutton.FloatingActionButton
+      android:id="@+id/fab"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:backgroundTint="@color/colorPrimary"
+      android:src="@drawable/ic_write"/>
+</com.skydoves.transformationlayout.TransformationLayout>
+```
+
+#### onTransformationStartContainer
+We should call `onTransformationStartContainer()` in the Fragment A that has the floating action button.
+
 ```kotlin
-transformationLayout.setOnTransformFinishListener {
-  Toast.makeText(context, "is transformed: $it", Toast.LENGTH_SHORT).show()
+override fun onCreate(savedInstanceState: Bundle?) {
+  super.onCreate(savedInstanceState)
+  onTransformationStartContainer()
+}
+```
+
+Here is the Java way.
+```java
+TransitionExtensionKt.onTransformationStartContainer(this);
+```
+
+#### getBundle and addTransformation
+We should get a bundle from the `TransformationLayout` and put it into the argument.<br>
+And in the fragment manager's transaction, we should add the `TransformationLayout` using `addTransformation` method.
+
+```kotlin
+val fragment = MainSingleDetailFragment()
+val bundle = transformationLayout.getBundle("TransformationParams")
+bundle.putParcelable(MainSingleDetailFragment.posterKey, poster)
+fragment.arguments = bundle
+
+requireFragmentManager()
+  .beginTransaction()
+  .addTransformation(transformationLayout)
+  .replace(R.id.main_container, fragment, MainSingleDetailFragment.TAG)
+  .addToBackStack(MainSingleDetailFragment.TAG)
+  .commit()
+}
+```
+#### Transition name in Fragment A
+We must set a specific transition name to the `TransformationLayout`.<br>
+If you want to transform a recyclerView's item, set transiton name in `onBindViewHolder`.
+```kotlin
+transformationLayout.transitionName = "myTransitionName"
+```
+Here is the Java way.
+```java
+transformationLayout.setTransitionName("myTransitionName");
+```
+#### onTransformationEndContainer in Fragment B
+We should get a `TransformationLayout.Params` from the arguments, and call `onTransformationEndContainer` method.<br>
+It must be called in `onCreate` method.
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+  super.onCreate(savedInstanceState)
+
+ TransformationLayout.Params.
+    val params = arguments?.getParcelable<TransformationLayout.Params>("TransformationParams")
+    onTransformationEndContainer(params)
 }
 ```
 Here is the Java way.
 ```java
-transformationLayout.onTransformFinishListener = new OnTransformFinishListener() {
-  @Override public void onFinish(boolean isTransformed) {
-    Toast.makeText(context, "is transformed:" + isTransformed, Toast.LENGTH_SHORT).show();
-  }
-};
+TransformationLayout.Params params = getArguments().getParcelable("TransformationParams");
+TransitionExtensionKt.onTransformationEndContainer(this, params);
 ```
+#### Transition name in Fragment B
+And finally set the specific transition name (same as the transformationLayot in Fragment A) <br>
+to the target view in Fragment B in `onViewCreated`.
+```kotlin
+override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+  super.onViewCreated(view, savedInstanceState)
+   
+  detail_container.transitionName = "myTransitionName"
+}
+```
+
 
 ## TransformationLayout Attributes
 Attributes | Type | Default | Description
@@ -243,9 +406,15 @@ direction | Direction.AUTO, Direction.ENTER, Direction.RETURN | Direction.AUTO |
 fadeMode | FadeMode.IN, FadeMode.OUT, FadeMode.CROSS, FadeMode.THROUGH | FadeMode.IN | Set the FadeMode to be used to swap the content of the start View with that of the end View.
 fitMode | FitMode.AUTO, FitMode.WIDTH, FitMode.HEIGHT | FitMode.AUTO | Set the fitMode to be used when scaling the incoming content of the end View.
 
+## Additional 🎈
+You can reference the usage of the TransformationLayout in another repository [MarvelHeroes](https://github.com/skydoves/MarvelHeroes). <br>
+A demo application based on modern Android application tech-stacks and MVVM architecture.
+
+![screenshot](https://user-images.githubusercontent.com/24237865/80602029-9426ee80-8a69-11ea-866d-4e31b6526ab2.png)
 
 ## Find this library useful? :heart:
-Support it by joining __[stargazers](https://github.com/skydoves/transformationlayout/stargazers)__ for this repository. :star:
+Support it by joining __[stargazers](https://github.com/skydoves/transformationlayout/stargazers)__ for this repository. :star: <br>
+And __[follow](https://github.com/skydoves)__ me for my next creations! 🤩
 
 # License
 ```xml

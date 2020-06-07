@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.skydoves.transformationlayoutdemo
+package com.skydoves.transformationlayoutdemo.single
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,9 +22,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import com.skydoves.transformationlayout.TransformationLayout
+import com.skydoves.transformationlayout.addTransformation
+import com.skydoves.transformationlayout.onTransformationStartContainer
 import com.skydoves.transformationlayoutdemo.MockUtil.getMockPosters
-import com.skydoves.transformationlayoutdemo.recycler.PosterAdapter
+import com.skydoves.transformationlayoutdemo.R
+import com.skydoves.transformationlayoutdemo.recycler.Poster
 import com.skydoves.transformationlayoutdemo.recycler.PosterMenuAdapter
+import com.skydoves.transformationlayoutdemo.recycler.PosterSingleAdapter
 import kotlinx.android.synthetic.main.fragment_home.backgroundView
 import kotlinx.android.synthetic.main.fragment_home.fab
 import kotlinx.android.synthetic.main.fragment_home.menu_home
@@ -32,7 +37,7 @@ import kotlinx.android.synthetic.main.fragment_home.recyclerView
 import kotlinx.android.synthetic.main.fragment_home.recyclerView_menu
 import kotlinx.android.synthetic.main.fragment_home.transformationLayout
 
-class HomeFragment : Fragment() {
+class MainSingleFragment : Fragment(), PosterSingleAdapter.PosterDelegate {
 
   override fun onCreateView(
     inflater: LayoutInflater,
@@ -42,10 +47,33 @@ class HomeFragment : Fragment() {
     return inflater.inflate(R.layout.fragment_home, container, false)
   }
 
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    // [Step1]: apply onTransformationStartContainer.
+    onTransformationStartContainer()
+  }
+
+  /** This function will be called from the [PosterSingleAdapter.PosterDelegate]'s onBindViewHolder. */
+  override fun onItemClick(poster: Poster, itemView: TransformationLayout) {
+    val fragment = MainSingleDetailFragment()
+    // [Step2]: getBundle from the TransformationLayout.
+    val bundle = itemView.getBundle(MainSingleDetailFragment.paramsKey)
+    bundle.putParcelable(MainSingleDetailFragment.posterKey, poster)
+    fragment.arguments = bundle
+
+    requireFragmentManager()
+      .beginTransaction()
+      // [Step3]: addTransformation using the TransformationLayout.
+      .addTransformation(itemView)
+      .replace(R.id.main_container, fragment, MainSingleDetailFragment.TAG)
+      .addToBackStack(MainSingleDetailFragment.TAG)
+      .commit()
+  }
+
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
 
-    recyclerView.adapter = PosterAdapter().apply { addPosterList(getMockPosters()) }
+    recyclerView.adapter = PosterSingleAdapter(this).apply { addPosterList(getMockPosters()) }
     recyclerView_menu.adapter = PosterMenuAdapter().apply { addPosterList(getMockPosters()) }
 
     fab.setOnClickListener {
@@ -62,5 +90,9 @@ class HomeFragment : Fragment() {
       transformationLayout.finishTransform()
       Toast.makeText(context, "Compose New", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  companion object {
+    const val TAG = "MainSingleFragment"
   }
 }

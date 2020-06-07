@@ -16,7 +16,6 @@
 
 package com.skydoves.transformationlayout
 
-import android.content.Context
 import android.graphics.Color
 import com.google.android.material.transition.MaterialContainerTransform
 import java.io.Serializable
@@ -44,10 +43,24 @@ internal object DefaultParamValues : TransformationParams {
   override var fitMode: TransformationLayout.FitMode = TransformationLayout.FitMode.AUTO
 }
 
-internal fun TransformationParams.getMaterialContainerTransform(context: Context): MaterialContainerTransform {
+internal fun TransformationParams.getMaterialContainerTransform(): MaterialContainerTransform {
   val params = this
-  return MaterialContainerTransform(context).apply {
+  return MaterialContainerTransform().apply {
     addTarget(android.R.id.content)
+    duration = params.duration
+    pathMotion = params.pathMotion.getPathMotion()
+    drawingViewId = params.zOrder
+    containerColor = params.containerColor
+    scrimColor = params.scrimColor
+    transitionDirection = params.direction.value
+    fadeMode = params.fadeMode.value
+    fitMode = params.fitMode.value
+  }
+}
+
+internal fun TransformationParams.getMaterialFragmentTransform(): MaterialContainerTransform {
+  val params = this
+  return MaterialContainerTransform().apply {
     duration = params.duration
     pathMotion = params.pathMotion.getPathMotion()
     drawingViewId = params.zOrder

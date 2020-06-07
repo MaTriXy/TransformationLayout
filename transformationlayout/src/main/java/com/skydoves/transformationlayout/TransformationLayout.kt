@@ -28,6 +28,7 @@ import android.transition.PathMotion
 import android.transition.Transition
 import android.transition.TransitionManager
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -38,22 +39,47 @@ import kotlinx.android.parcel.Parcelize
 
 class TransformationLayout : FrameLayout, TransformationParams {
 
+  /** A target view that will be transformed from [TransformationLayout]. */
   private lateinit var targetView: View
+
+  /** Presents [TransformationLayout] is already transformed or not.  */
   var isTransformed: Boolean = false
     private set
+
+  /** Presents [TransformationLayout] is during transforming or not. */
   var isTransforming: Boolean = false
     private set
 
+  /** Duration of the transformation. */
   override var duration: Long = DefaultParamValues.duration
+
+  /** [Motion] of the transformation path. */
   override var pathMotion: Motion = DefaultParamValues.pathMotion
+
+  /** The id of the View whose overlay TransitionDrawable will be added to. */
   override var zOrder: Int = DefaultParamValues.zOrder
-  @ColorInt override var containerColor: Int = DefaultParamValues.containerColor
-  @ColorInt override var scrimColor: Int = DefaultParamValues.scrimColor
+
+  /** The container color to be used as the background of the morphing container. */
+  @ColorInt
+  override var containerColor: Int = DefaultParamValues.containerColor
+
+  /** The color to be drawn under the morphing container but within the bounds of the zOrder. */
+  @ColorInt
+  override var scrimColor: Int = DefaultParamValues.scrimColor
+
+  /** The [Direction] to be used by this transform. */
   override var direction: Direction = DefaultParamValues.direction
+
+  /** The [FadeMode] to be used to swap the content of the start View with that of the end View. */
   override var fadeMode: FadeMode = DefaultParamValues.fadeMode
+
+  /** The [FitMode] to be used when scaling the incoming content of the end View. */
   override var fitMode: FitMode = DefaultParamValues.fitMode
 
-  @JvmField var onTransformFinishListener: OnTransformFinishListener? = null
+  @JvmField
+  var onTransformFinishListener: OnTransformFinishListener? = null
+
+  var throttledTime = System.currentTimeMillis()
 
   constructor(context: Context) : super(context)
 
@@ -181,6 +207,14 @@ class TransformationLayout : FrameLayout, TransformationParams {
     return ActivityOptions.makeSceneTransitionAnimation(activity, this, transitionName).toBundle()
   }
 
+  /** get a bundle with parcelable transformation params. */
+  fun getBundle(keyName: String, transitionName: String? = this.transitionName): Bundle {
+    if (transitionName != null) {
+      setTransitionName(transitionName)
+    }
+    return Bundle().apply { putParcelable(keyName, getParams()) }
+  }
+
   /** gets parameters of the [TransformationLayout.Params]. */
   fun getParams(): Params {
     return Params(
@@ -201,26 +235,69 @@ class TransformationLayout : FrameLayout, TransformationParams {
     return getParams()
   }
 
-  /** starts transforming with delaying the container view. */
+  /** starts transforming the [TransformationLayout] into targetView with stopping container. */
   fun startTransform(container: ViewGroup) {
-    require(::targetView.isInitialized) {
-      "You must set a targetView using bindTargetView() or transformation_targetView attribute." +
-        "If you already set targetView, check you use duplicated resource id to the TransformLayout."
-    }
-    if (!isTransformed && !isTransforming) {
-      beginDelayingAndTransform(container, this, targetView)
+    container.post {
+      require(::targetView.isInitialized) {
+        "You must set a targetView using bindTargetView() or transformation_targetView attribute." +
+          "If you already set targetView, check you use duplicated resource id to the TransformLayout."
+      }
+      if (!isTransformed && !isTransforming) {
+        val now = System.currentTimeMillis()
+        if (now - throttledTime >= duration) {
+          Log.e("Test", "throttledTime: $throttledTime now: $now")
+          throttledTime = now
+          beginDelayingAndTransform(container, this, targetView)
+        }
+      }
     }
   }
 
-  /** re-transforming with delaying the container view. */
+  /** starts transforming the [TransformationLayout] into targetView with delaying. */
+  fun startTransformWithDelay(container: ViewGroup, delay: Long) {
+    postDelayed({
+      startTransform(container)
+    }, delay)
+  }
+
+  /** starts transforming the [TransformationLayout] into targetView with stopping parent. */
+  fun startTransform() {
+    startTransform(parent as ViewGroup)
+  }
+
+  /** starts transforming the [TransformationLayout] into targetView with stopping parent with delaying. */
+  fun startTransformWithDelay(delay: Long) {
+    startTransformWithDelay(parent as ViewGroup, delay)
+  }
+
+  /** transforming the targetView into [TransformationLayout]. */
   fun finishTransform(container: ViewGroup) {
-    require(::targetView.isInitialized) {
-      "You must set a targetView using bindTargetView() or transformation_targetView attribute." +
-        "If you already set targetView, check you use duplicated resource id to the TransformLayout."
+    container.post {
+      require(::targetView.isInitialized) {
+        "You must set a targetView using bindTargetView() or transformation_targetView attribute." +
+          "If you already set targetView, check you use duplicated resource id to the TransformLayout."
+      }
+      if (isTransformed && !isTransforming) {
+        beginDelayingAndTransform(container, targetView, this)
+      }
     }
-    if (isTransformed && !isTransforming) {
-      beginDelayingAndTransform(container, targetView, this)
-    }
+  }
+
+  /** transforming the targetView into [TransformationLayout] with delaying. */
+  fun finishTransformWithDelay(container: ViewGroup, delay: Long) {
+    postDelayed({
+      finishTransform(container)
+    }, delay)
+  }
+
+  /** transforming the targetView into [TransformationLayout] with stopping parent. */
+  fun finishTransform() {
+    finishTransform(parent as ViewGroup)
+  }
+
+  /** transforming the targetView into [TransformationLayout] with stopping parent with delaying.. */
+  fun finishTransformWithDelay(delay: Long) {
+    finishTransformWithDelay(parent as ViewGroup, delay)
   }
 
   private fun beginDelayingAndTransform(container: ViewGroup, mStartView: View, mEndView: View) {
@@ -231,7 +308,7 @@ class TransformationLayout : FrameLayout, TransformationParams {
   }
 
   private fun getTransform(mStartView: View, mEndView: View): MaterialContainerTransform {
-    return MaterialContainerTransform(mStartView.context).apply {
+    return MaterialContainerTransform().apply {
       startView = mStartView
       endView = mEndView
       duration = this@TransformationLayout.duration
@@ -273,6 +350,7 @@ class TransformationLayout : FrameLayout, TransformationParams {
     var transitionName: String
   ) : Parcelable, TransformationParams
 
+  /** The [Direction] to be used by this transform. */
   enum class Direction(val value: Int) {
     /**
      * Indicates that this transition should use automatic detection to determine whether it is an
@@ -288,6 +366,7 @@ class TransformationLayout : FrameLayout, TransformationParams {
     RETURN(MaterialContainerTransform.TRANSITION_DIRECTION_RETURN)
   }
 
+  /** The [FadeMode] to be used to swap the content of the start View with that of the end View. */
   enum class FadeMode(val value: Int) {
     /**
      * Indicates that this transition should only fade in the incoming content, without changing the
@@ -303,6 +382,7 @@ class TransformationLayout : FrameLayout, TransformationParams {
 
     /** Indicates that this transition should cross fade the outgoing and incoming content. */
     CROSS(MaterialContainerTransform.FADE_MODE_CROSS),
+
     /**
      * Indicates that this transition should sequentially fade out the outgoing content and fade in
      * the incoming content.
@@ -310,6 +390,7 @@ class TransformationLayout : FrameLayout, TransformationParams {
     THROUGH(MaterialContainerTransform.FADE_MODE_THROUGH)
   }
 
+  /** The [FitMode] to be used when scaling the incoming content of the end View. */
   enum class FitMode(val value: Int) {
     /**
      * Indicates that this transition should automatically choose whether to use {@link
