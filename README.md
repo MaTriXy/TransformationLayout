@@ -1,13 +1,11 @@
-
-
 <h1 align="center">TransformationLayout</h1></br>
 <p align="center"> 
-🌠 Transform into a different view or activity using morphing animations.
-<br>Using<a href="https://material.io/design/motion/the-motion-system.html" target="_blank"> Transformation motions </a> of new material version.
+🌠 Transform views, activity, and fragments into other components with container transform animations.
 </p>
 </br>
 
 <p align="center">
+  <a href="https://devlibrary.withgoogle.com/products/android/repos/skydoves-TransformationLayout"><img alt="Google" src="https://skydoves.github.io/badges/google-devlib.svg"/></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/></a>
   <a href="https://android-arsenal.com/api?level=21"><img alt="API" src="https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat"/></a>
   <a href="https://github.com/skydoves/TransformationLayout/actions"><img alt="Build Status" src="https://github.com/skydoves/TransformationLayout/workflows/Android%20CI/badge.svg"/></a> 
@@ -17,42 +15,37 @@
 ## Download
 Go to the [Releases](https://github.com/skydoves/TransformationLayout/releases) to download the demo APK.
 
-## Screeshots
+## Screenshots
 <p align="center">
-<img src="/preview/preview0.gif" width="32%"/>
-<img src="/preview/preview1.gif" width="32%"/>
-<img src="/preview/preview2.gif" width="32%"/>
+<img src="/preview/preview0.gif" width="270"/>
+<img src="/preview/preview1.gif" width="270"/>
+<img src="/preview/preview2.gif" width="270"/>
 </p>
 
+## Morphing Animation for Jetpack Compose
+If you want to implement morphing animation in Jetpack Compose, check out [Orbital](https://github.com/skydoves/Orbital).
+
 ## Including in your project
-[![Download](https://api.bintray.com/packages/devmagician/maven/transformationlayout/images/download.svg) ](https://bintray.com/devmagician/maven/transformationlayout/_latestVersion)
-[![JitPack](https://jitpack.io/v/skydoves/TransformationLayout.svg)](https://jitpack.io/#skydoves/TransformationLayout)
-### Gradle 
-Add below codes to your **root** `build.gradle` file (not your module build.gradle file).
-```gradle
-allprojects {
-    repositories {
-        jcenter()
-    }
-}
-```
-And add a dependency code to your **module**'s `build.gradle` file.
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.skydoves/transformationlayout.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.github.skydoves%22%20AND%20a:%22transformationlayout%22)
+
+### Gradle
+Add the dependency below to your **module**'s `build.gradle` file:
+
 ```gradle
 dependencies {
-    implementation "com.github.skydoves:transformationlayout:1.0.4"
+    implementation("com.github.skydoves:transformationlayout:1.1.5")
 }
 ```
 
 ## Usage
-Add following XML namespace inside your XML layout file.
+Add the XML namespace below inside your XML layout file:
 
 ```gradle
 xmlns:app="http://schemas.android.com/apk/res-auto"
 ```
 
 ### TransformationLayout
-Here is a basic example of implementing `TransformationLayout`. <br>
-We must wrap one or more views that we want to transform.
+`TransformationLayout` is an essential concept to transform your Views, Activities, and Fragments into other components. You must wrap one or more Views that are supposed to be transformed using `TransformationLayout` like the example code below:
 
 ```gradle
 <com.skydoves.transformationlayout.TransformationLayout
@@ -66,15 +59,15 @@ We must wrap one or more views that we want to transform.
   app:transformation_pathMode="arc" // arc, linear
 >
 
-   <!-- other views -->
+   <!-- other complicated views -->
 
 </com.skydoves.transformationlayout.TransformationLayout>
 ```
 
 ### Transform into a view
-Here is a simple example of transform fab into a view.
+For instance, you can transform a floating button into a CardView as you've seen in the example below:
 
-<img src="https://user-images.githubusercontent.com/24237865/75549488-25321700-5a73-11ea-8908-609592907e84.gif" align="right" width="32%"/>
+<img src="https://user-images.githubusercontent.com/24237865/75549488-25321700-5a73-11ea-8908-609592907e84.gif" align="right" width="280"/>
 
 ```gradle
 <com.skydoves.transformationlayout.TransformationLayout
@@ -101,15 +94,15 @@ Here is a simple example of transform fab into a view.
     app:cardBackgroundColor="@color/colorPrimary" />
 ```
 
-
 #### Bind a TargetView
-We can bind a targetView that will be transformed from the `TransformationLayout` using the below attribute in XML.<br>
-If you bind a targetView to the `TransformationLayout`, the targetView's visibility will be `GONE`.
+With the attribute below in your XML file, you can bind a `targetView` that should be transformed from the `TransformationLayout`. If you bind a targetView with a `TransformationLayout`, the targetView's visibility will be `GONE` by default.
 
 ```gradle
 app:transformation_targetView="@+id/myCardView"
 ```
-Or we can bind a targetView using method.
+
+You can also bind a targetView with a `TransformationLayout` using `bindTargetView` method like the code below:
+
 ```kotlin
 transformationLayout.bindTargetView(myCardView)
 ```
@@ -159,7 +152,7 @@ transformationLayout.onTransformFinishListener = new OnTransformFinishListener()
 ### Transform into an Activity
 We can implement transformation between activities easily using `TransformationActivity` and `TransformationCompat`.
 
-<img src="/preview/preview2.gif" align="right" width="32%"/>
+<img src="/preview/preview2.gif" align="right" width="270"/>
 
 Here is an example of transforming a floating action button to Activity. <br>
 We don't need to bind a targetView.
@@ -190,7 +183,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 ```
 Here is the Java way.
 ```java
-TransitionExtensionKt.onTransformationStartContainer(this);
+TransformationCompat.onTransformationStartContainer(this);
 ```
 
 #### TransformationAppCompatActivity
@@ -212,12 +205,12 @@ TransformationCompat.startActivity(transformationLayout, intent)
 Here is the Java way.
 ```java
 Intent intent = new Intent(context, DetailActivity.class);
-TransformationCompat.INSTANCE.startActivity(transformationLayout, intent);
+TransformationCompat.startActivity(transformationLayout, intent);
 ```
 
 ### Manually Transform into an Activity
 
-<img src="/preview/preview2.gif" align="right" width="32%"/>
+<img src="/preview/preview2.gif" align="right" width="270"/>
 
 Here is an example of transforming a floating action button to Activity. <br>
 We don't need to bind a targetView.
@@ -248,7 +241,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 ```
 Here is the Java way.
 ```java
-TransitionExtensionKt.onTransformationStartContainer(this);
+TransformationCompat.onTransformationStartContainer(this);
 ```
 
 #### startActivity
@@ -296,15 +289,15 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 Here is the __Java__ way.
 ```java
-TransformationLayout.Params params = getIntent().getParcelableExtra("myTransitionName");
-TransitionExtensionKt.onTransformationEndContainer(this, params);
+TransformationLayout.Params params = getIntent().getParcelableExtra("TransformationParams");
+TransformationCompat.onTransformationEndContainer(this, params);
 ```
 
 ### Transform into a Fragment
 We can implement transformation between fragments for a single Activity application.<br>
 Here is an example of transforming a floating action button in Fragment A to Fragment B.
 
-<img src="https://user-images.githubusercontent.com/24237865/80108763-a1e6fa80-85b7-11ea-9350-f9d8ebc46310.gif" align="right" width="32%"/>
+<img src="https://user-images.githubusercontent.com/24237865/80108763-a1e6fa80-85b7-11ea-9350-f9d8ebc46310.gif" align="right" width="270"/>
 
 ```gradle
 <com.skydoves.transformationlayout.TransformationLayout
@@ -334,7 +327,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 Here is the Java way.
 ```java
-TransitionExtensionKt.onTransformationStartContainer(this);
+TransformationCompat.onTransformationStartContainer(this);
 ```
 
 #### getBundle and addTransformation
@@ -355,6 +348,19 @@ requireFragmentManager()
   .commit()
 }
 ```
+Here is the Java way
+```java
+MainSingleDetailFragment fragment = new MainSingleDetailFragment();
+Bundle bundle = transformationLayout.getBundle("TransformationParams", "transitionName");
+fragment.setArguments(bundle);
+
+FragmentTransaction fragmentTransaction = requireFragmentManager().beginTransaction();
+TransformationCompat.addTransformation(
+    fragmentTransaction, transformationLayout, "transitionName");
+fragmentTransaction.replace(R.id.main_container, fragment, MainSingleDetailFragment.TAG)
+    .addToBackStack(MainSingleDetailFragment.TAG)
+    .commit();
+```
 #### Transition name in Fragment A
 We must set a specific transition name to the `TransformationLayout`.<br>
 If you want to transform a recyclerView's item, set transiton name in `onBindViewHolder`.
@@ -372,15 +378,14 @@ It must be called in `onCreate` method.
 override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
 
- TransformationLayout.Params.
-    val params = arguments?.getParcelable<TransformationLayout.Params>("TransformationParams")
-    onTransformationEndContainer(params)
+  val params = arguments?.getParcelable<TransformationLayout.Params>("TransformationParams")
+  onTransformationEndContainer(params)
 }
 ```
 Here is the Java way.
 ```java
 TransformationLayout.Params params = getArguments().getParcelable("TransformationParams");
-TransitionExtensionKt.onTransformationEndContainer(this, params);
+TransformationCompat.onTransformationEndContainer(this, params);
 ```
 #### Transition name in Fragment B
 And finally set the specific transition name (same as the transformationLayot in Fragment A) <br>
@@ -401,10 +406,15 @@ targetView | resource id | none | Bind a targetView that will be transformed.
 duration | Long | 350L | Duration of the transformation.
 pathMotion | Motion.ARC, Motion.LINEAR | default layout | Indicates that this transition should be drawn as the which path.
 containerColor | Color | Color.TRANSPARENT | Set the container color to be used as the background of the morphing container.
+allContainerColor | Color | Color.TRANSPARENT | The all container colors (start and end) to be used as the background of the morphing container.
 scrimColor | Color | Color.TRANSPARENT | Set the color to be drawn under the morphing container.
 direction | Direction.AUTO, Direction.ENTER, Direction.RETURN | Direction.AUTO | Set the direction to be used by this transform.
 fadeMode | FadeMode.IN, FadeMode.OUT, FadeMode.CROSS, FadeMode.THROUGH | FadeMode.IN | Set the FadeMode to be used to swap the content of the start View with that of the end View.
 fitMode | FitMode.AUTO, FitMode.WIDTH, FitMode.HEIGHT | FitMode.AUTO | Set the fitMode to be used when scaling the incoming content of the end View.
+startElevation | Float | ELEVATION_NOT_SET | The elevation that will be used to render a shadow around the container at the start of the transition.
+endElevation | Float | ELEVATION_NOT_SET | The elevation that will be used to render a shadow around the container at the end of the transition.
+elevationShadowEnabled | Boolean | true if (version > Pie) | Whether shadows should be drawn around the container to approximate native elevation shadows on the start and end views.
+holdAtEndEnabled | Boolean | false | Whether to hold the last frame at the end of the animation.
 
 ## Additional 🎈
 You can reference the usage of the TransformationLayout in another repository [MarvelHeroes](https://github.com/skydoves/MarvelHeroes). <br>
